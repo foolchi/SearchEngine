@@ -2,43 +2,159 @@ package evaluation;
 
 import dataClass.DocScore;
 import models.IRmodel;
-import evaluation.EvalMeasure;
-import evaluation.QueryParser;
 import dataClass.Query;
-
+import java.io.*;
 import java.util.ArrayList;
 
 /**
  * Created by foolchi on 28/10/14.
+ * Evaluation Class
  */
 public class EvalIRModel {
     public EvalIRModel(){isPrint = false;}
     private boolean isPrint;
+    private ArrayList<IRList> irLists;
     public void setPrint(boolean isPrint) {
         this.isPrint = isPrint;
     }
-    public float getAverageScore(){
-        int nQuery = 0;
-        float sumPrecision = 0;
-        Query q = queryParser.nextQuery();
+    private Query q;
+    private final String resultFile = "result.txt";
+
+    private void saveResults(){
+        // Save the result
+
+        if (irLists == null)
+            generateSearchResults();
+        Writer writer = null;
+        try{
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(resultFile), "utf-8"));
+            for (IRList irList : irLists){
+                writer.write('\n');
+                writer.write("Query: " + irList.getQuery().id);
+                writer.write('\n');
+                ArrayList<Integer> pertinence = irList.getPertinence();
+                ArrayList<Integer> relevants = irList.getQuery().relevants;
+                writer.write("Relevants: ");
+                //writer.write('\n');
+                for (int relevant : relevants) {
+                    writer.write(String.valueOf(relevant));
+                    //writer.write(r);
+                    writer.write('\t');
+                }
+                writer.write('\n');
+                writer.write("Pertinences: ");
+                //writer.write('\n');
+                for (int i = 0; i < pertinence.size() && i < 10; i++){
+                    writer.write(String.valueOf(pertinence.get(i)));
+                    //writer.write(r);
+                    writer.write('\t');
+                }
+                writer.write('\n');
+            }
+
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            try { if (writer != null) writer.close();} catch (Exception e) {}
+        }
+
+    }
+
+    public void generateSearchResults(){
+        irLists = new ArrayList<IRList>();
+        q = queryParser.nextQuery();
+
+//        while (q != null){
+//            ArrayList<DocScore> docScores = iRmodel.getRanking(q.toQueryHash());
+//            ArrayList<Integer> docs = new ArrayList<Integer>();
+//            for (DocScore docScore : docScores) {
+//                docs.add((int) docScore.doc);
+//            }
+//            irLists.add(new IRList(q, docs));
+//            q = queryParser.nextQuery();
+//        }
+
+        ArrayList<Thread> threads = new ArrayList<Thread>();
+        final ArrayList<Query> queries = new ArrayList<Query>();
         while (q != null){
-            nQuery ++;
-            ArrayList<DocScore> docScores = iRmodel.getRanking(q.toQueryHash());
-            ArrayList<Integer> docs = new ArrayList<Integer>();
-            for (int i = 0; i < docScores.size(); i++){
-                docs.add((int)docScores.get(i).doc);
-            }
-            IRList irList = new IRList(q, docs);
-            float currentPrecision = evalMeasure.eval(irList);
-            if (isPrint) {
-                System.out.println(currentPrecision);
-            }
-            sumPrecision += currentPrecision;
+            queries.add(q);
+
             q = queryParser.nextQuery();
         }
-        if (nQuery == 0)
+
+        for (int i = 0; i < queries.size(); i++){
+            final int finalI = i;
+            Thread t = new Thread(){
+                public void run(){
+                    ArrayList<DocScore> docScores = iRmodel.getRanking(queries.get(finalI).toQueryHash());
+                    ArrayList<Integer> docs = new ArrayList<Integer>();
+                    for (DocScore docScore : docScores) {
+                        docs.add((int) docScore.doc);
+                    }
+                    irLists.add(new IRList(queries.get(finalI), docs));
+                    System.out.println("Size: " + irLists.size());
+                }
+            };
+            threads.add(t);
+            t.start();
+        }
+        for (Thread t : threads){
+            try {
+                t.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        saveResults();
+    }
+
+
+    public void testAllEvaluation(){
+        if (irLists == null)
+            generateSearchResults();
+        EvalMeasure evalMeasure;
+        System.out.println("=========AveragePrecision=========");
+        evalMeasure  = new EvalAveragePrecision();
+        setEvalMeasure(evalMeasure);
+        getAverageScore();
+
+        for (int i = 1; i <= 9; i++){
+            System.out.println("=========PrecisionRappel@" + i +"=========");
+            evalMeasure = new EvalPrecisionRappel(i);
+            setEvalMeasure(evalMeasure);
+            getAverageScore();
+        }
+    }
+
+    public float getAverageScore(){
+        if (irLists == null)
+            generateSearchResults();
+        int nQuery = 0;
+        float sumPrecision = 0;
+        ArrayList<Float> precisions = new ArrayList<Float>();
+        for (IRList irList : irLists){
+            float currentPrecision = evalMeasure.eval(irList);
+            if (currentPrecision >= 0){
+                if (isPrint) {
+                    System.out.println(currentPrecision);
+                }
+                precisions.add(currentPrecision);
+                sumPrecision += currentPrecision;
+                nQuery ++;
+            }
+        }
+        if (nQuery == 0){
+            System.out.println("No valid query!");
             return 0;
-        return sumPrecision / nQuery;
+        }
+        float average = sumPrecision / nQuery;
+        float ecart = 0;
+        for (float p : precisions){
+            ecart += (p - average) * (p - average);
+        }
+        ecart = (float)Math.sqrt(ecart / nQuery);
+        System.out.println("Average Precision: " + average + ", ecart-type: " + ecart);
+        return average;
     }
 
     public void setiRmodel(IRmodel iRmodel) {

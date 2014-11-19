@@ -9,14 +9,14 @@ import java.util.HashMap;
 
 /**
  * Created by 3405309 on 25/09/14.
+ * Indexation for input
  */
 public class Index implements Serializable{
 
     public Index() throws IOException{
         docs = new HashMap<Long, Pair>();
         stems = new HashMap<String, Pair>();
-        index = new RandomAccessFile(name + "_index", "rw");
-        inverted = new RandomAccessFile(name + "_inverted", "rw");
+
         pointedGraph = new HashMap<Long, ArrayList<Long>>();
         //docFrom = new HashMap<Long, DocFrom>();
     }
@@ -27,6 +27,8 @@ public class Index implements Serializable{
     private HashMap<String, Pair> stems;
     private HashMap<Long, ArrayList<Long>> pointedGraph;
     private int totalDoc;
+    private HashMap<Long, HashMap<String, Integer>> docTfs;
+    private HashMap<String, HashMap<Long, Integer>> stemTfs;
 
 
 
@@ -77,7 +79,7 @@ public class Index implements Serializable{
                     e.printStackTrace();
                 }
             }
-
+            System.out.println("doc id : " + d.getId());
             pointedGraph.put(d.getId(), d.getX());
 
             try {
@@ -106,51 +108,56 @@ public class Index implements Serializable{
             }
             stems.put(s, new Pair(current, inverted.getFilePointer() - current));
         }
+        generateTfsForStem();
         generateIdfsForStem();
+        generateTfsForDoc();
+
     }
 
-    public HashMap<String, Integer> getTfsForDoc(long id) throws IOException {
-        if (index == null) {
-            index = new RandomAccessFile(name + "_index", "rw");
-        }
-        //RandomAccessFile readFile = new RandomAccessFile(name + "_index", "r");
-        HashMap<String, Integer> doc = new HashMap<String, Integer>();
-        String word, count;
-        int iCount;
-        //System.out.println(index.length());
-        Pair p = docs.get(id);
-        if (p == null){
-            System.out.println("Id not found");
-            return null;
-        }
-        long end = p.start + p.length;
-        try {
+    private void generateTfsForDoc() throws IOException{
+        docTfs = new HashMap<Long, HashMap<String, Integer>>();
+        for (Long id : docs.keySet()){
+            if (index == null) {
+                index = new RandomAccessFile(name + "_index", "rw");
+            }
+            //RandomAccessFile readFile = new RandomAccessFile(name + "_index", "r");
+            HashMap<String, Integer> doc = new HashMap<String, Integer>();
+            String word, count;
+            int iCount;
+            //System.out.println(index.length());
+            Pair p = docs.get(id);
+            if (p == null){
+                System.out.println("Id not found");
+                continue;
+            }
+            long end = p.start + p.length;
 
             index.seek(p.start);
-            while (index.getFilePointer() < end){
+            while (index.getFilePointer() < end) {
                 word = index.readLine().trim();
                 count = index.readLine().trim();
                 //System.out.println(word + ", " + count);
-                try{
+                try {
                     iCount = Integer.valueOf(count);
-                } catch (NumberFormatException e){
+                } catch (NumberFormatException e) {
                     iCount = 0;
                 }
                 doc.put(word, iCount);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("File not found");
+            docTfs.put(id, doc);
         }
+    }
 
-        return doc;
+    public HashMap<String, Integer> getTfsForDoc(long id) throws IOException {
+        return docTfs.get(id);
     }
 
     public void generateIdfsForStem() throws IOException {
         stemsIdfs = new HashMap<String, Float>();
         for (String stem : stems.keySet()) {
             HashMap<Long, Integer> s = getTfsForStem(stem);
-            stemsIdfs.put(stem, (float)Math.log10((double)totalDoc/s.size()));
+            stemsIdfs.put(stem, (float)Math.log10((1.0f + totalDoc)/(1.0f + s.size())));
+            //stemsIdfs.put(stem, (1.0f * totalDoc) / s.size());
         }
     }
 
@@ -163,36 +170,41 @@ public class Index implements Serializable{
         return 0;
     }
 
-    public HashMap<Long, Integer> getTfsForStem(String s) throws  IOException {
-        if (inverted == null) {
-            inverted = new RandomAccessFile(name + "_inverted", "rw");
-        }
-        HashMap<Long, Integer> stem = new HashMap<Long, Integer>();
-        Pair p = stems.get(s);
-        if (p == null) {
-            //System.out.println("Word not found!");
-            return null;
-        }
-
-        String idString, tfString;
-        long id;
-        int tf;
-        long end = p.start + p.length;
-
-
-        inverted.seek(p.start);
-        while (inverted.getFilePointer() < end) {
-            idString = inverted.readLine().trim();
-            tfString = inverted.readLine().trim();
-            try {
-                id = Long.valueOf(idString);
-                tf = Integer.valueOf(tfString);
-                stem.put(id, tf);
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
+    public void generateTfsForStem() throws IOException{
+        stemTfs = new HashMap<String, HashMap<Long, Integer>>();
+        for (String s : stems.keySet()){
+            if (inverted == null) {
+                inverted = new RandomAccessFile(name + "_inverted", "rw");
             }
+            HashMap<Long, Integer> stem = new HashMap<Long, Integer>();
+            Pair p = stems.get(s);
+            if (p == null) {
+                System.out.println("Word not found!");
+                continue;
+            }
+
+            String idString, tfString;
+            long id;
+            int tf;
+            long end = p.start + p.length;
+
+            inverted.seek(p.start);
+            while (inverted.getFilePointer() < end) {
+                idString = inverted.readLine().trim();
+                tfString = inverted.readLine().trim();
+                try {
+                    id = Long.valueOf(idString);
+                    tf = Integer.valueOf(tfString);
+                    stem.put(id, tf);
+                } catch (NumberFormatException e) {
+                    e.printStackTrace();
+                }
+            }
+            stemTfs.put(s, stem);
         }
-        return stem;
+    }
+    public HashMap<Long, Integer> getTfsForStem(String s) throws  IOException {
+        return stemTfs.get(s);
     }
 
     public void printAllIndex() throws FileNotFoundException {
@@ -215,6 +227,13 @@ public class Index implements Serializable{
 
     public void setName(String name) {
         this.name = name;
+        try {
+            index = new RandomAccessFile(name + "_index", "rw");
+            inverted = new RandomAccessFile(name + "_inverted", "rw");
+        } catch (FileNotFoundException e) {
+            System.out.println("Cannot create index and inverted file");
+            e.printStackTrace();
+        }
     }
 
     public Parser getParser() {

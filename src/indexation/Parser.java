@@ -25,18 +25,29 @@ public abstract class Parser {
 
         StringBuilder sb = new StringBuilder();
         boolean dStart = false;
-        String line = "";
+        String line;
+        long prevOffset;
         while(true){
             try {
+                prevOffset = input.getFilePointer();
                 line = input.readLine();
             } catch (Exception e) {
                 e.printStackTrace();
                 break;
             }
-            if (line == null || line.isEmpty())
+//            if (line == null || line.isEmpty())
+//                break;
+            if (line == null)
                 break;
-
             if (line.startsWith(startString)){
+                if (dStart){
+                    try {
+                        input.seek(prevOffset);
+                        break;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
                 dStart = true;
             }
 

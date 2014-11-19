@@ -6,6 +6,7 @@ import dataClass.DocScore;
 
 /**
  * Created by foolchi on 22/10/14.
+ * Abstract Class for search models
  */
 public abstract class IRmodel {
     public abstract HashMap<Long, Float> getScores(HashMap<String, Integer> query);
@@ -17,6 +18,7 @@ public abstract class IRmodel {
     public ArrayList<DocScore> getRanking (HashMap<String, Integer> query) {
         HashMap<Long, Float> docScores = getScores(query);
         Long[] ids = new Long[docScores.keySet().size()];
+        //System.out.println("id size : " + ids.length);
         int currentPosition = 0;
         for (Long id : docScores.keySet()) {
             ids[currentPosition] = id;
@@ -37,6 +39,8 @@ public abstract class IRmodel {
             docResults.add(new DocScore(id, docScores.get(id)));
         }
         if (randomWalk  != null){
+
+            //System.out.println("RandomWalk");
             randomWalk.setDocScores(docResults);
             randomWalk.run();
             return randomWalk.getRanking();

@@ -1,13 +1,11 @@
 package models;
 
-import dataClass.DocScore;
 import dataClass.Graph;
-import indexation.Index;
-
 import java.util.*;
 
 /**
  * Created by foolchi on 29/10/14.
+ * PageRank Model
  */
 public class PageRank extends RandomWalk {
     public PageRank(){
@@ -32,47 +30,6 @@ public class PageRank extends RandomWalk {
         baseScore = (1 - pRandom) / graphSize;
     }
 
-    public void setDocScores(ArrayList<DocScore> docScores){
-        Graph graph = new Graph(index.getPointedGraph());
-        Set<Long> validIdsInput = new HashSet<Long>();
-        for (int i = 0; i < nSeeds; i++){
-            validIdsInput.add(docScores.get(i).doc);
-        }
-        Set<Long> pointedIds = new HashSet<Long>();
-        for (Long id : validIdsInput){
-            try {
-                pointedIds.addAll(graph.getReversedPoints(id));
-            } catch (NullPointerException e){
-                System.out.println("Id : " + id + " is empty");
-                continue;
-            }
-        }
-        Random rand = new Random();
-        int min = nSeeds, max = docScores.size();
-        int pointedAdded = 0;
-        while (pointedAdded < nPointed) {
-            //System.out.println("Random");
-            int r = rand.nextInt(max-min) + min;
-            Long docId = docScores.get(r).doc;
-            if (!(validIdsInput.contains(docId)) && pointedIds.contains(docId)){
-                validIdsInput.add(docId);
-                pointedAdded ++;
-            }
-        }
-        graph.setValidIds(validIdsInput);
-        setGraph(graph);
-    }
-
-    public void setIndex(Index index){
-        this.index = index;
-    }
-    public void setNSeed(int nSeeds){
-        this.nSeeds = nSeeds;
-    }
-    public void setNPointed(int nPointed){
-        this.nPointed = nPointed;
-    }
-
     public void setpRandom(float pRandom) {
         this.pRandom = pRandom;
         baseScore = (1 - pRandom) / graphSize;
@@ -85,8 +42,11 @@ public class PageRank extends RandomWalk {
             for (Long id : validIds){
                 float currentScore = 0;
                 ArrayList<Long> pointedIds = graph.getReversedPoints(id);
+                if (pointedIds == null)
+                    continue;
                 for (Long pointedId : pointedIds){
-                    currentScore += scores.get(pointedId) / nPoints.get(pointedId);
+                    if (scores.containsKey(pointedId))
+                        currentScore += scores.get(pointedId) / nPoints.get(pointedId);
                 }
                 currentScore *= pRandom;
                 currentScore += baseScore;
@@ -95,9 +55,11 @@ public class PageRank extends RandomWalk {
             scores = nScores;
         }
     }
-    private Index index;
+//    private Index index;
+//    private int nSeeds, nPointed;
     private float pRandom, baseScore;
-    private int graphSize, nSeeds, nPointed;
+    private int graphSize;
+
     private Set<Long> validIds;
     private HashMap<Long, Integer> nPoints;
 }

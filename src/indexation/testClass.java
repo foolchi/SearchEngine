@@ -3,22 +3,14 @@ package indexation;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Set;
-
+import evaluation.*;
 import models.*;
 import dataClass.DocScore;
 import dataClass.Query;
-import evaluation.CacmQueryParser;
-import evaluation.EvalMeasure;
-import evaluation.EvalPrecisionRappel;
-import evaluation.EvalAveragePrecision;
-import evaluation.IRList;
-import evaluation.EvalIRModel;
-import sun.jvm.hotspot.debugger.Page;
-
 
 public class testClass {
     public static void main(String[] args) throws IOException {
+        String s1 = "cacm", s2 = "cisi";
         //readTest();
         //randomAccessFileTest();
         //writeTest();
@@ -27,9 +19,12 @@ public class testClass {
         //readSerilizeTest();
         //vectorModelTest();
         //queryParserTest();
-        //queryEval();
-        //okapiTest();
-        pageRankTest();
+        //vectorTest("cacm");
+        //vectorTest("cisi");
+        //languageModelTest(s2);
+        //languageModelTest(s1);
+        okapiTest(s1);
+        //pageRankTest(s1);
     }
 
     private static void test(){
@@ -39,89 +34,137 @@ public class testClass {
         System.out.println(haha);
     }
 
-    private static void pageRankTest() throws IOException {
-        String queryFile = "Data/cacm/cacm.qry", resultFile = "Data/cacm/cacm.rel";
+    private static void HITStest(String data) throws IOException {
+        String queryFile = "Data/" + data + "/" + data + ".qry", resultFile = "Data/" + data + "/" + data + ".rel";
+        Index index = getIndex(data);
+
         RandomAccessFile queryFileAccess = new RandomAccessFile(queryFile, "r");
         RandomAccessFile resultFileAccess = new RandomAccessFile(resultFile, "r");
-        CacmQueryParser parser = new CacmQueryParser(queryFileAccess, resultFileAccess);
-        Index index = getIndex();
+        QueryParser parser = null;
+        if (data.equals("cacm"))
+            parser = new CacmQueryParser(queryFileAccess, resultFileAccess);
+        else if (data.equals("cisi"))
+            parser = new CisiQueryParser(queryFileAccess, resultFileAccess);
+
         Weighter weighterTFIDF = new WeighterBM25(index);
-        //Vector vector = new Vector(weighterTFIDF);
         IRmodel iRmodel = new Okapi(weighterTFIDF);
-        PageRank randomWalk = new PageRank();
+
+        RandomWalk randomWalk = new HITS();
         randomWalk.setNIteration(10);
         randomWalk.setIndex(index);
         randomWalk.setNPointed(10);
-        randomWalk.setNSeed(20);
+        randomWalk.setNSeed(30);
         iRmodel.setRandomWalk(randomWalk);
-        //iRmodel.setTotalModel(index.getStemsIdfs());
-        //EvalMeasure evalMeasure = new EvalPrecisionRappel(10);
-        EvalMeasure evalMeasure  = new EvalAveragePrecision();
         EvalIRModel evalIRModel = new EvalIRModel();
-        evalIRModel.setPrint(true);
+        evalIRModel.setPrint(false);
         evalIRModel.setiRmodel(iRmodel);
-        evalIRModel.setEvalMeasure(evalMeasure);
         evalIRModel.setQueryParser(parser);
-        System.out.println("Average Precision: " + evalIRModel.getAverageScore());
+        evalIRModel.testAllEvaluation();
+
     }
 
-    private static void okapiTest() throws IOException {
-        String queryFile = "Data/cacm/cacm.qry", resultFile = "Data/cacm/cacm.rel";
+    private static void pageRankTest(String data) throws IOException {
+        String queryFile = "Data/" + data + "/" + data + ".qry", resultFile = "Data/" + data + "/" + data + ".rel";
+        Index index = getIndex(data);
+
         RandomAccessFile queryFileAccess = new RandomAccessFile(queryFile, "r");
         RandomAccessFile resultFileAccess = new RandomAccessFile(resultFile, "r");
-        CacmQueryParser parser = new CacmQueryParser(queryFileAccess, resultFileAccess);
-        Index index = getIndex();
+        QueryParser parser = null;
+        if (data.equals("cacm"))
+            parser = new CacmQueryParser(queryFileAccess, resultFileAccess);
+        else if (data.equals("cisi"))
+            parser = new CisiQueryParser(queryFileAccess, resultFileAccess);
+
         Weighter weighterTFIDF = new WeighterBM25(index);
-        //Vector vector = new Vector(weighterTFIDF);
         IRmodel iRmodel = new Okapi(weighterTFIDF);
-        //iRmodel.setTotalModel(index.getStemsIdfs());
-        //EvalMeasure evalMeasure = new EvalPrecisionRappel(10);
-        EvalMeasure evalMeasure  = new EvalAveragePrecision();
+        PageRank randomWalk = new PageRank();
+        //RandomWalk randomWalk = new HITS();
+        randomWalk.setNIteration(10);
+        randomWalk.setIndex(index);
+        randomWalk.setNPointed(10);
+        randomWalk.setNSeed(30);
+        iRmodel.setRandomWalk(randomWalk);
         EvalIRModel evalIRModel = new EvalIRModel();
-        evalIRModel.setPrint(true);
+        evalIRModel.setPrint(false);
         evalIRModel.setiRmodel(iRmodel);
-        evalIRModel.setEvalMeasure(evalMeasure);
         evalIRModel.setQueryParser(parser);
-        System.out.println("Average Precision: " + evalIRModel.getAverageScore());
+        evalIRModel.testAllEvaluation();
     }
-    private static void queryEval() throws IOException{
-        String queryFile = "Data/cacm/cacm.qry", resultFile = "Data/cacm/cacm.rel";
+
+    private static void okapiTest(String data) throws IOException {
+
+        String queryFile = "Data/" + data + "/" + data + ".qry", resultFile = "Data/" + data + "/" + data + ".rel";
+        Index index = getIndex(data);
+
         RandomAccessFile queryFileAccess = new RandomAccessFile(queryFile, "r");
         RandomAccessFile resultFileAccess = new RandomAccessFile(resultFile, "r");
-        CacmQueryParser parser = new CacmQueryParser(queryFileAccess, resultFileAccess);
-        Index index = getIndex();
-        WeighterTFIDF weighterTFIDF = new WeighterTFIDF(index);
-        //Vector vector = new Vector(weighterTFIDF);
-        LanguageModel iRmodel = new LanguageModel(weighterTFIDF);
-        iRmodel.setTotalModel(index.getStemsIdfs());
-        //EvalMeasure evalMeasure = new EvalPrecisionRappel(10);
-        EvalMeasure evalMeasure  = new EvalAveragePrecision();
-        EvalIRModel evalIRModel = new EvalIRModel();
-        evalIRModel.setPrint(true);
-        evalIRModel.setiRmodel(iRmodel);
-        evalIRModel.setEvalMeasure(evalMeasure);
-        evalIRModel.setQueryParser(parser);
+        QueryParser parser = null;
+        if (data.equals("cacm"))
+            parser = new CacmQueryParser(queryFileAccess, resultFileAccess);
+        else if (data.equals("cisi"))
+            parser = new CisiQueryParser(queryFileAccess, resultFileAccess);
 
-        /*
-        int nQuery = 0;
-        float sumPrecision = 0;
-        Query q = parser.nextQuery();
-        while (q != null) {
-            //System.out.println(q.toString());
-            nQuery ++;
-            ArrayList<DocScore> docScores = vector.getRanking(q.toQueryHash());
-            ArrayList<Integer> docs = new ArrayList<Integer>();
-            for (int i = 0; i < docScores.size(); i++){
-                docs.add((int)docScores.get(i).doc);
-            }
-            IRList irList = new IRList(q, docs);
-            float currentPrecision = evalMeasure.eval(irList);
-            sumPrecision += currentPrecision;
-            System.out.println(currentPrecision);
-            q = parser.nextQuery();
+        Weighter weighterTFIDF = new WeighterBM25(index);
+        IRmodel iRmodel = new Okapi(weighterTFIDF);
+        EvalIRModel evalIRModel = new EvalIRModel();
+        evalIRModel.setPrint(false);
+        evalIRModel.setiRmodel(iRmodel);
+        evalIRModel.setQueryParser(parser);
+        evalIRModel.testAllEvaluation();
+
+    }
+
+    private static void languageModelTest(String data) throws IOException{
+
+        for (int i = 1; i < 10; i++) {
+            String queryFile = "Data/" + data + "/" + data + ".qry", resultFile = "Data/" + data + "/" + data + ".rel";
+            Index index = getIndex(data);
+
+            RandomAccessFile queryFileAccess = new RandomAccessFile(queryFile, "r");
+            RandomAccessFile resultFileAccess = new RandomAccessFile(resultFile, "r");
+            QueryParser parser = null;
+            if (data.equals("cacm"))
+                parser = new CacmQueryParser(queryFileAccess, resultFileAccess);
+            else if (data.equals("cisi"))
+                parser = new CisiQueryParser(queryFileAccess, resultFileAccess);
+
+            WeighterTFIDF weighterTFIDF = new WeighterTFIDF(index);
+            weighterTFIDF.setMODEL(3);
+            LanguageModel iRmodel = new LanguageModel(weighterTFIDF);
+            iRmodel.setTotalModel(index.getStemsIdfs());
+            iRmodel.setLambda(i / 10.0f);
+            System.out.println("====================lambda:" + i / 10.0f + "====================");
+            EvalIRModel evalIRModel = new EvalIRModel();
+            evalIRModel.setPrint(false);
+            evalIRModel.setiRmodel(iRmodel);
+            evalIRModel.setQueryParser(parser);
+            //System.out.println("Average Precision: " + evalIRModel.getAverageScore());
+            evalIRModel.testAllEvaluation();
         }
-*/
-        System.out.println("Average Precision: " + evalIRModel.getAverageScore());
+    }
+
+    private static void vectorTest(String data) throws IOException{
+
+        String queryFile = "Data/" + data + "/" + data + ".qry", resultFile = "Data/" + data + "/" + data + ".rel";
+        Index index = getIndex(data);
+
+        RandomAccessFile queryFileAccess = new RandomAccessFile(queryFile, "r");
+        RandomAccessFile resultFileAccess = new RandomAccessFile(resultFile, "r");
+        QueryParser parser = null;
+        if (data.equals("cacm"))
+            parser = new CacmQueryParser(queryFileAccess, resultFileAccess);
+        else if (data.equals("cisi"))
+            parser = new CisiQueryParser(queryFileAccess, resultFileAccess);
+
+        WeighterTFIDF weighterTFIDF = new WeighterTFIDF(index);
+        weighterTFIDF.setMODEL(3);
+        Vector iRmodel = new Vector(weighterTFIDF);
+        iRmodel.setNormalized(true);
+        EvalIRModel evalIRModel = new EvalIRModel();
+        evalIRModel.setPrint(false);
+        evalIRModel.setiRmodel(iRmodel);
+        evalIRModel.setQueryParser(parser);
+        evalIRModel.testAllEvaluation();
     }
 
     private static void queryParserTest() throws IOException {
@@ -140,7 +183,7 @@ public class testClass {
         }
         */
         System.out.println(q.toString());
-        Index index = getIndex();
+        Index index = getIndex("cacm");
         WeighterTFIDF weighterTFIDF = new WeighterTFIDF(index);
         Vector vector = new Vector(weighterTFIDF);
         ArrayList<DocScore> docScores = vector.getRanking(q.toQueryHash());
@@ -151,7 +194,7 @@ public class testClass {
     }
 
     private static void vectorModelTest() throws IOException {
-        Index index = getIndex();
+        Index index = getIndex("cacm");
         if (index == null) {
             System.out.println("Index not found!");
             return;
@@ -195,7 +238,6 @@ public class testClass {
     }
 
 
-
     private static void writeTest() throws IOException {
         String cfile = "Data/cacm/cacm.txt";
         Index i = new Index();
@@ -225,47 +267,84 @@ public class testClass {
         //i.printAllIndex();
     }
 
-    private static void serializeTest() throws IOException {
-        String cfile = "Data/cacm/cacm.txt";
+//    private static void serializeTest() throws IOException {
+//        String cfile = "Data/cacm/cacm.txt";
+//        Index i = new Index();
+//        i.setName("cacm");
+//        i.setStemmer(new Stemmer());
+//        RandomAccessFile input = new RandomAccessFile(cfile, "r");
+//        CacmParser cacmParser = new CacmParser(input, 0);
+//        i.setParser(cacmParser);
+//        i.indexation();
+//
+//        File file = new File("Index.out");
+//        ObjectOutputStream oout = new ObjectOutputStream(new FileOutputStream(file));
+//        oout.writeObject(i);
+//        oout.close();
+//    }
+//
+//    private static Index getIndex() throws IOException {
+//        File file = new File("Index.out");
+//        ObjectInputStream oin = new ObjectInputStream(new FileInputStream(file));
+//        Index i = null;
+//        try {
+//            i = (Index)(oin.readObject());
+//            return i;
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            serializeTest();
+//            return getIndex();
+//        }
+//    }
+
+
+    private static void serializeTest(String data) throws IOException {
+        String cfile = "Data/" + data + "/" + data + ".txt";
         Index i = new Index();
-        i.setName("cacm");
+        i.setName(data);
         i.setStemmer(new Stemmer());
         RandomAccessFile input = new RandomAccessFile(cfile, "r");
-        CacmParser cacmParser = new CacmParser(input, 0);
-        i.setParser(cacmParser);
-        i.indexation();
+        Parser parser = null;
+        if (data.equals("cacm"))
+            parser = new CacmParser(input, 0);
+        else if (data.equals("cisi"))
+            parser = new CisiParser(input, 0);
 
-        File file = new File("Index.out");
+        i.setParser(parser);
+        i.indexation();
+        String out = "Index_" + data + ".out";
+        File file = new File(out);
         ObjectOutputStream oout = new ObjectOutputStream(new FileOutputStream(file));
         oout.writeObject(i);
         oout.close();
     }
 
-    private static Index getIndex() throws IOException {
-        File file = new File("Index.out");
-        ObjectInputStream oin = new ObjectInputStream(new FileInputStream(file));
-        Index i = null;
+
+    private static Index getIndex(String data) throws IOException {
+
         try {
-            i = (Index)(oin.readObject());
-            return i;
+            String out = "Index_" + data + ".out";
+            File file = new File(out);
+            ObjectInputStream oin = new ObjectInputStream(new FileInputStream(file));
+            return (Index)(oin.readObject());
         } catch (Exception e) {
-            e.printStackTrace();
-            i = null;
+            //e.printStackTrace();
+            System.out.println("Data file not exist, re-serialise");
+            serializeTest(data);
+            return getIndex(data);
         }
-        if (i == null) {
-            serializeTest();
-            return getIndex();
-        }
-        return i;
     }
-    private static void readSerilizeTest() throws  IOException {
+
+
+    private static void readSerialiseTest() throws  IOException {
         File file = new File("Index.out");
         ObjectInputStream oin = new ObjectInputStream(new FileInputStream(file));
-        Index i = null;
+        Index i;
         try {
             i = (Index)(oin.readObject());
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            System.out.println("Data file not exist");
             return;
         }
 

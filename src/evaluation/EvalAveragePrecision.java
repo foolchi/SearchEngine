@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 /**
  * Created by foolchi on 28/10/14.
+ * Average Precision Evaluation
  */
 public class EvalAveragePrecision extends EvalMeasure {
     public EvalAveragePrecision(){}
@@ -14,7 +15,7 @@ public class EvalAveragePrecision extends EvalMeasure {
         ArrayList<Integer> pertinence = l.getPertinence();
         int nRelevant = relevants.size(), nPertinence = pertinence.size();
         if (nRelevant == 0)
-            return 1;
+            return -1;
         float totalPrecision = 0;
         int totalHit = 0;
         for (int i = 0; i < nPertinence; i++){

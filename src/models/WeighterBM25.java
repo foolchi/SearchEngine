@@ -8,6 +8,7 @@ import java.util.HashMap;
 
 /**
  * Created by foolchi on 29/10/14.
+ * BM25 weighter
  */
 public class WeighterBM25 extends Weighter {
 
@@ -17,8 +18,9 @@ public class WeighterBM25 extends Weighter {
     public WeighterBM25(Index index){
         this.index = index;
         totalDoc = index.getTotalDoc();
+        System.out.println("Total Doc: " + totalDoc);
         calcAverageDocLength();
-        k1 = 1.2f; b = 0.75f;
+        k1 = 1.5f; b = 0.75f;
     }
 
     @Override
@@ -53,6 +55,7 @@ public class WeighterBM25 extends Weighter {
                 }
             }
             averageDocLength = (float)totalLength / totalDoc;
+            System.out.println("AverageLengh:" + averageDocLength);
         } catch (IOException e) {
             averageDocLength = 0;
             System.out.println("Doc not found");
@@ -69,21 +72,26 @@ public class WeighterBM25 extends Weighter {
                 return docWeights;
             }
             int relevants = stems.size();
+//            System.out.println("relevants: " + relevants);
             for (Long id : ids){
                 HashMap<String, Integer> doc = index.getTfsForDoc(id);
-                int currentDocLength = 0;
-                for (int l : doc.values()) {
-                    currentDocLength += l;
-                }
-                float K = k1 * (1 - b + b * currentDocLength / averageDocLength);
-                float currentWeight = 0;
                 if (doc.containsKey(stem)){
+                    float currentDocLength = 0.0f;
+                    for (int l : doc.values()) {
+                        currentDocLength += l;
+                    }
+                    float K = k1 * (1 - b + b * currentDocLength / averageDocLength);
                     float idf =  (float)Math.log10((totalDoc - relevants + 0.5) / (relevants + 0.5));
                     if (idf < 0)
                         idf = 0;
-                    currentWeight = idf * ((k1 + 1) * doc.get(stem) / (K + doc.get(stem)));
+                    //float tf = doc.get(stem)/currentDocLength;
+                    float tf = doc.get(stem);
+//                    if (id == 10){
+//                        System.out.println(idf + "*" + "((" + k1 + "+" +  "1)" + "*" + tf + "/" + "(" + K + "+" + tf + "))");
+//                    }
+                    float currentWeight = idf * ((k1 + 1) * tf / (K + tf));
+                    docWeights.put(id, currentWeight);
                 }
-                docWeights.put(id, currentWeight);
             }
             return docWeights;
         } catch (IOException e) {

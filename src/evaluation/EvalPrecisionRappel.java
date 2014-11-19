@@ -1,8 +1,5 @@
 package evaluation;
 
-
-import dataClass.Query;
-
 import java.util.ArrayList;
 
 /**
@@ -17,6 +14,10 @@ public class EvalPrecisionRappel extends EvalMeasure{
     public EvalPrecisionRappel(int nbLevels){
         this.nbLevels = nbLevels;
     }
+    public void setNbLevels(int nbLevels){
+        if (nbLevels > 0)
+            this.nbLevels = nbLevels;
+    }
     @Override
     public float eval(IRList l) {
         ArrayList<Integer> relevants = l.getQuery().relevants;
@@ -27,17 +28,17 @@ public class EvalPrecisionRappel extends EvalMeasure{
         if (currentLevel > nPertinence)
             currentLevel = nPertinence;
         if (nRelevants == 0)
-            return 1;
+            return -1;
         if (currentLevel == 0)
             return 0;
-        int nHit = 0;
+        float nHit = 0.0f;
         for (int i = 0; i < currentLevel; i++){
             if (relevants.contains(pertinence.get(i))){
                 nHit ++;
             }
         }
 
-        return (float)nHit / currentLevel;
+        return nHit / currentLevel;
     }
     private int nbLevels;
 }

@@ -7,6 +7,7 @@ import java.io.RandomAccessFile;
 
 /**
  * Created by foolchi on 22/10/14.
+ * Cacm query parser
  */
 public class CacmQueryParser extends QueryParser {
     public CacmQueryParser(RandomAccessFile query, RandomAccessFile result) {
@@ -33,7 +34,8 @@ public class CacmQueryParser extends QueryParser {
         try {
             while (true) {
                 if (query.getFilePointer() >= query.length())
-                    return queryClass;
+                    //return queryClass;
+                    break;
                 currentLine = query.readLine();
                 if (currentLine == null || currentLine.isEmpty()) {
                     if (isStart)

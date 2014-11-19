@@ -2,20 +2,23 @@ package models;
 
 import dataClass.DocScore;
 import dataClass.Graph;
+import indexation.Index;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * Created by foolchi on 16/10/14.
+ * Abstract random walk model for PageRank and HITS
  */
 public abstract class RandomWalk {
     public RandomWalk(){}
 
-    public abstract void setDocScores(ArrayList<DocScore> docScores);
+    //public abstract void setDocScores(ArrayList<DocScore> docScores);
 
+    public abstract void setGraph(Graph graph);
     public ArrayList<DocScore> getRanking(){
         HashMap<Long, Float> docScores = scores;
+        System.out.println("DocScore Size: " + docScores.size());
         Long[] ids = new Long[docScores.keySet().size()];
         int currentPosition = 0;
         for (Long id : docScores.keySet()) {
@@ -47,6 +50,48 @@ public abstract class RandomWalk {
         return docScores;
     }
 
+    public void setDocScores(ArrayList<DocScore> docScores){
+        Graph graph = new Graph(index.getPointedGraph());
+        Set<Long> validIdsInput = new HashSet<Long>();
+        for (int i = 0; i < nSeeds; i++){
+            validIdsInput.add(docScores.get(i).doc);
+        }
+        Set<Long> pointedIds = new HashSet<Long>();
+        for (Long id : validIdsInput){
+            try {
+                pointedIds.addAll(graph.getReversedPoints(id));
+            } catch (NullPointerException e){
+                //System.out.println("Id : " + id + " is empty");
+
+            }
+        }
+        Random rand = new Random();
+        int min = nSeeds, max = docScores.size();
+        int pointedAdded = 0;
+        while (pointedAdded < nPointed) {
+            //System.out.println("Random");
+            int r = rand.nextInt(max-min) + min;
+            Long docId = docScores.get(r).doc;
+            if (!(validIdsInput.contains(docId)) && pointedIds.contains(docId)){
+                validIdsInput.add(docId);
+                pointedAdded ++;
+            }
+        }
+        graph.setValidIds(validIdsInput);
+        setGraph(graph);
+    }
+
+    public void setIndex(Index index){
+        this.index = index;
+    }
+    public void setNSeed(int nSeeds){
+        this.nSeeds = nSeeds;
+    }
+    public void setNPointed(int nPointed){
+        this.nPointed = nPointed;
+    }
+
+
     public abstract void run();
 
     public void setNIteration(int n){
@@ -56,7 +101,8 @@ public abstract class RandomWalk {
         this.precision = precision;
     }
 
-    protected int nIteration;
+    protected int nIteration, nSeeds, nPointed;
+    protected Index index;
     protected float precision;
     protected Graph graph;
     protected HashMap<Long, Float> scores;

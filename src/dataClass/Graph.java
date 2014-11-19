@@ -7,6 +7,7 @@ import java.util.Set;
 
 /**
  * Created by foolchi on 29/10/14.
+ * Graph class for PageRank and HITS models
  */
 public class Graph {
     private HashMap<Long, ArrayList<Long>> pointedGraph, reversedGraph;
@@ -47,11 +48,12 @@ public class Graph {
     }
 
     public void generateReversedGraph(){
+        reversedGraph = new HashMap<Long, ArrayList<Long>>();
         Set<Long> allIds = new HashSet<Long>();
         for (ArrayList<Long> points : pointedGraph.values()) {
             allIds.addAll(points);
         }
-        System.out.println("All ID: " + allIds);
+        //System.out.println("All ID: " + allIds);
         for (long id : allIds){
             ArrayList<Long> reversedPoint = new ArrayList<Long>();
             for (long pointedId : pointedGraph.keySet()) {
@@ -64,6 +66,8 @@ public class Graph {
     }
 
     public void cleanGraph(){
+        return;
+        /*
         Set<Long> allIds = new HashSet<Long>();
         validIds = new HashSet<Long>();
         for (ArrayList<Long> points : pointedGraph.values()) {
@@ -92,6 +96,7 @@ public class Graph {
         for (Long id : toBeRemoved){
             pointedGraph.remove(id);
         }
+        */
     }
 
     public void setValidIds(Set<Long> validIds){
