@@ -15,8 +15,11 @@ public abstract class Weighter {
     public float getDocNorm(long idDoc){
         if (docNorm == null)
             docNorm = new HashMap<Long, Float>();
-        if (docNorm.containsKey(idDoc))
-            return docNorm.get(idDoc);
+        if (docNorm.containsKey(idDoc)) {
+            if (docNorm.get(idDoc) != null)
+                return docNorm.get(idDoc);
+            return 1.0f;
+        }
         float norm = 0;
         HashMap<String, Float> docWeights = getDocWeightsForDoc(idDoc);
         for (float val : docWeights.values()){

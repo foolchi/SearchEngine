@@ -1,8 +1,12 @@
 package evaluation;
 
 import dataClass.DocScore;
+import indexation.Index;
+import models.HITS;
 import models.IRmodel;
 import dataClass.Query;
+import models.PageRank;
+import models.RandomWalk;
 import java.io.*;
 import java.util.ArrayList;
 
@@ -19,6 +23,16 @@ public class EvalIRModel {
     }
     private Query q;
     private final String resultFile = "result.txt";
+
+
+    private int randomWalkMode = -1; // 0: PageRank, 1: HITS
+    public int nIteration, nPointed, nSeed;
+    public Index index;
+
+    public void setRandomWalk(int randomWalkMode){
+        this.randomWalkMode = randomWalkMode;
+    }
+
 
     private void saveResults(){
         // Save the result
@@ -66,6 +80,15 @@ public class EvalIRModel {
 
 //        while (q != null){
 //            ArrayList<DocScore> docScores = iRmodel.getRanking(q.toQueryHash());
+//                            HITS pageRank = new HITS();
+//                        pageRank.setNSeed(nSeed);
+//                        pageRank.setNPointed(nPointed);
+//                        pageRank.setIndex(index);
+//                        pageRank.setNIteration(nIteration);
+//            pageRank.setDocScores(docScores);
+//            pageRank.run();
+//            docScores = pageRank.getRanking();
+//
 //            ArrayList<Integer> docs = new ArrayList<Integer>();
 //            for (DocScore docScore : docScores) {
 //                docs.add((int) docScore.doc);
@@ -74,6 +97,7 @@ public class EvalIRModel {
 //            q = queryParser.nextQuery();
 //        }
 
+        // Multi-thread
         ArrayList<Thread> threads = new ArrayList<Thread>();
         final ArrayList<Query> queries = new ArrayList<Query>();
         while (q != null){
@@ -81,18 +105,37 @@ public class EvalIRModel {
 
             q = queryParser.nextQuery();
         }
+        final ArrayList<RandomWalk> randomWalks = new ArrayList<RandomWalk>();
+        for (int i = 0; i < queries.size(); i++){
+            RandomWalk randomWalk;
+            if (randomWalkMode == 0)
+                randomWalk = new PageRank();
+            else
+                randomWalk = new HITS();
+
+            randomWalk.setNSeed(nSeed);
+            randomWalk.setNPointed(nPointed);
+            randomWalk.setIndex(index);
+            randomWalk.setNIteration(nIteration);
+            randomWalks.add(randomWalk);
+        }
 
         for (int i = 0; i < queries.size(); i++){
             final int finalI = i;
             Thread t = new Thread(){
                 public void run(){
                     ArrayList<DocScore> docScores = iRmodel.getRanking(queries.get(finalI).toQueryHash());
+                    if (randomWalkMode != -1){
+                        RandomWalk randomWalk = randomWalks.get(finalI);
+                        randomWalk.setDocScores(docScores);
+                        randomWalk.run();
+                        docScores = randomWalk.getRanking();
+                    }
                     ArrayList<Integer> docs = new ArrayList<Integer>();
                     for (DocScore docScore : docScores) {
                         docs.add((int) docScore.doc);
                     }
                     irLists.add(new IRList(queries.get(finalI), docs));
-                    System.out.println("Size: " + irLists.size());
                 }
             };
             threads.add(t);
@@ -105,7 +148,7 @@ public class EvalIRModel {
                 e.printStackTrace();
             }
         }
-        saveResults();
+//        saveResults();
     }
 
 

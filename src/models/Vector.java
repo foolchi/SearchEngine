@@ -46,7 +46,13 @@ public class Vector extends IRmodel {
                 }
             }
             if (normalized){
-                currentWeight /= (weighter.getDocNorm(id) * norm);
+                float docNorm;
+                try{
+                    docNorm = weighter.getDocNorm(id);
+                } catch (Exception e){
+                    docNorm = 1.0f;
+                }
+                currentWeight /= (docNorm * norm);
             }
             docScores.put(id, currentWeight);
         }

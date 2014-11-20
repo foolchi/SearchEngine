@@ -15,10 +15,19 @@ public class WeighterBM25 extends Weighter {
     private Index index;
     private int totalDoc;
     private float k1, b, averageDocLength;
+
+    public void setK1(float k1) {
+        this.k1 = k1;
+    }
+
+    public void setB(float b) {
+        this.b = b;
+    }
+
     public WeighterBM25(Index index){
         this.index = index;
         totalDoc = index.getTotalDoc();
-        System.out.println("Total Doc: " + totalDoc);
+//        System.out.println("Total Doc: " + totalDoc);
         calcAverageDocLength();
         k1 = 1.5f; b = 0.75f;
     }
@@ -55,7 +64,7 @@ public class WeighterBM25 extends Weighter {
                 }
             }
             averageDocLength = (float)totalLength / totalDoc;
-            System.out.println("AverageLengh:" + averageDocLength);
+//            System.out.println("AverageLengh:" + averageDocLength);
         } catch (IOException e) {
             averageDocLength = 0;
             System.out.println("Doc not found");
@@ -84,11 +93,7 @@ public class WeighterBM25 extends Weighter {
                     float idf =  (float)Math.log10((totalDoc - relevants + 0.5) / (relevants + 0.5));
                     if (idf < 0)
                         idf = 0;
-                    //float tf = doc.get(stem)/currentDocLength;
                     float tf = doc.get(stem);
-//                    if (id == 10){
-//                        System.out.println(idf + "*" + "((" + k1 + "+" +  "1)" + "*" + tf + "/" + "(" + K + "+" + tf + "))");
-//                    }
                     float currentWeight = idf * ((k1 + 1) * tf / (K + tf));
                     docWeights.put(id, currentWeight);
                 }

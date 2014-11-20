@@ -50,6 +50,8 @@ public class LanguageModel extends IRmodel {
 //                    System.out.println((query.get(stem)/totalQuery) + "*" + "log(" + lambda + "*" + currentWeight + "+"  + (1 - lambda) + "*" + totalModel.get(stem) + ")");
                 currentScore += (query.get(stem)/totalQuery) * Math.log(lambda * currentWeight + (1 - lambda) * totalModel.get(stem));
             }
+//            System.out.println("id: " + id + "language score: " + currentScore);
+//            currentScore = -1/currentScore;
             docScores.put(id, currentScore);
         }
         return docScores;

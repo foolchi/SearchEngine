@@ -9,11 +9,11 @@ import java.util.*;
  */
 public class PageRank extends RandomWalk {
     public PageRank(){
-        pRandom = 0.5f;
+        pRandom = 0.9f;
     }
 
     public PageRank(Graph graph){
-        pRandom = 0.5f;
+        pRandom = 0.9f;
         setGraph(graph);
     }
 
@@ -21,11 +21,17 @@ public class PageRank extends RandomWalk {
         this.graph = graph;
         scores = new HashMap<Long, Float>();
         validIds = graph.getValidIds();
-        graphSize = graph.getGraphSize();
+        graphSize = validIds.size();
         float defaultScore = 1.0f / graphSize;
         for (Long id : validIds){
             scores.put(id, defaultScore);
         }
+        float totalScore = 0;
+        for (Long id : validIds){
+            totalScore += scores.get(id);
+        }
+//        System.out.println("Total score: " + totalScore);
+
         nPoints = graph.getNPoints();
         baseScore = (1 - pRandom) / graphSize;
     }
@@ -37,23 +43,35 @@ public class PageRank extends RandomWalk {
 
     @Override
     public void run() {
+        HashMap<Long, Float> nScores = new HashMap<Long, Float>();
         for (int i = 0; i < nIteration; i++){
-            HashMap<Long, Float> nScores = new HashMap<Long, Float>();
+
             for (Long id : validIds){
                 float currentScore = 0;
                 ArrayList<Long> pointedIds = graph.getReversedPoints(id);
-                if (pointedIds == null)
+                if (pointedIds == null) {
+                    nScores.put(id, scores.get(id) * pRandom + baseScore);
                     continue;
+                }
                 for (Long pointedId : pointedIds){
-                    if (scores.containsKey(pointedId))
+                    if (scores.containsKey(pointedId)) {
                         currentScore += scores.get(pointedId) / nPoints.get(pointedId);
+                    }
                 }
                 currentScore *= pRandom;
                 currentScore += baseScore;
                 nScores.put(id, currentScore);
             }
-            scores = nScores;
+            for (Long id : validIds){
+                scores.put(id, nScores.get(id));
+            }
         }
+
+//        float totalScore = 0;
+//        for (Long id : validIds){
+//            totalScore += scores.get(id);
+//        }
+//        System.out.println("Total score: " + totalScore);
     }
 //    private Index index;
 //    private int nSeeds, nPointed;

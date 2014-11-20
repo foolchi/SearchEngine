@@ -18,7 +18,14 @@ public abstract class RandomWalk {
     public abstract void setGraph(Graph graph);
     public ArrayList<DocScore> getRanking(){
         HashMap<Long, Float> docScores = scores;
-        System.out.println("DocScore Size: " + docScores.size());
+        for (DocScore docScore : initDocScores){
+            long currentId = docScore.doc;
+            if (docScores.containsKey(currentId)){
+                docScores.put(currentId, docScores.get(currentId) * docScore.score);
+            }
+        }
+
+//        System.out.println("DocScore Size: " + docScores.size());
         Long[] ids = new Long[docScores.keySet().size()];
         int currentPosition = 0;
         for (Long id : docScores.keySet()) {
@@ -51,32 +58,50 @@ public abstract class RandomWalk {
     }
 
     public void setDocScores(ArrayList<DocScore> docScores){
+        initDocScores = docScores;
         Graph graph = new Graph(index.getPointedGraph());
         Set<Long> validIdsInput = new HashSet<Long>();
         for (int i = 0; i < nSeeds; i++){
             validIdsInput.add(docScores.get(i).doc);
         }
         Set<Long> pointedIds = new HashSet<Long>();
+        Set<Long> addedIds = new HashSet<Long>();
         for (Long id : validIdsInput){
             try {
-                pointedIds.addAll(graph.getReversedPoints(id));
+//                pointedIds.addAll(graph.getReversedPoints(id));
+                addedIds.addAll(graph.getPoints(id));
+                ArrayList<Long> reversedIds = graph.getReversedPoints(id);
+                int len = reversedIds.size();
+                if (len <= nPointed) {
+                    addedIds.addAll(reversedIds);
+                    continue;
+                }
+                Random rand = new Random(System.currentTimeMillis());
+                int added = 0;
+                while (added < nPointed){
+                    int r = rand.nextInt(len);
+                    addedIds.add(reversedIds.get(r));
+                    added ++;
+                }
+
             } catch (NullPointerException e){
                 //System.out.println("Id : " + id + " is empty");
 
             }
         }
-        Random rand = new Random();
-        int min = nSeeds, max = docScores.size();
-        int pointedAdded = 0;
-        while (pointedAdded < nPointed) {
-            //System.out.println("Random");
-            int r = rand.nextInt(max-min) + min;
-            Long docId = docScores.get(r).doc;
-            if (!(validIdsInput.contains(docId)) && pointedIds.contains(docId)){
-                validIdsInput.add(docId);
-                pointedAdded ++;
-            }
-        }
+//        Random rand = new Random();
+//        int min = nSeeds, max = docScores.size();
+//        int pointedAdded = 0;
+//        while (pointedAdded < nPointed) {
+//            //System.out.println("Random");
+//            int r = rand.nextInt(max-min) + min;
+//            Long docId = docScores.get(r).doc;
+//            if (!(validIdsInput.contains(docId)) && pointedIds.contains(docId)){
+//                validIdsInput.add(docId);
+//                pointedAdded ++;
+//            }
+//        }
+        validIdsInput.addAll(addedIds);
         graph.setValidIds(validIdsInput);
         setGraph(graph);
     }
@@ -101,6 +126,7 @@ public abstract class RandomWalk {
         this.precision = precision;
     }
 
+    protected ArrayList<DocScore> initDocScores;
     protected int nIteration, nSeeds, nPointed;
     protected Index index;
     protected float precision;

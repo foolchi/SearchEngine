@@ -11,6 +11,9 @@ public class EvalAveragePrecision extends EvalMeasure {
 
     @Override
     public float eval(IRList l) {
+        if (l == null || l.getQuery() == null || l.getPertinence() == null)
+            return -1;
+
         ArrayList<Integer> relevants = l.getQuery().relevants;
         ArrayList<Integer> pertinence = l.getPertinence();
         int nRelevant = relevants.size(), nPertinence = pertinence.size();

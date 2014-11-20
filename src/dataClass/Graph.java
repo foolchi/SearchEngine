@@ -20,7 +20,15 @@ public class Graph {
     public HashMap<Long, Integer> getNPoints(){
         HashMap<Long, Integer> nPoints = new HashMap<Long, Integer>();
         for (Long id : validIds){
-            nPoints.put(id, pointedGraph.get(id).size());
+            ArrayList<Long> pIds = pointedGraph.get(id);
+            int size = 0;
+            for (Long pId : pIds){
+                if (validIds.contains(pId))
+                    size ++;
+            }
+            if (size == 0)
+                size = 1;
+            nPoints.put(id, size);
         }
         return nPoints;
     }
@@ -66,37 +74,35 @@ public class Graph {
     }
 
     public void cleanGraph(){
-        return;
-        /*
-        Set<Long> allIds = new HashSet<Long>();
-        validIds = new HashSet<Long>();
-        for (ArrayList<Long> points : pointedGraph.values()) {
-            allIds.addAll(points);
-        }
-        for (Long id : validIds){
-            if (pointedGraph.containsKey(id)){
-                validIds.add(id);
-            }
-        }
-        Set<Long> toBeRemoved = new HashSet<Long>();
-        for (Long id : pointedGraph.keySet()){
-            if (!(validIds.contains(id))){
-                toBeRemoved.add(id);
-                continue;
-            }
-            ArrayList<Long> pointed = pointedGraph.get(id), validPointed = new ArrayList<Long>();
-            for (Long pointedId : pointed){
-                if (validIds.contains(pointedId)){
-                    validPointed.add(pointedId);
-                }
-            }
+//        Set<Long> allIds = new HashSet<Long>();
+//        validIds = new HashSet<Long>();
+//        for (ArrayList<Long> points : pointedGraph.values()) {
+//            allIds.addAll(points);
+//        }
+//        for (Long id : validIds){
+//            if (pointedGraph.containsKey(id)){
+//                validIds.add(id);
+//            }
+//        }
+//        Set<Long> toBeRemoved = new HashSet<Long>();
+//        for (Long id : pointedGraph.keySet()){
+//            if (!(validIds.contains(id))){
+//                toBeRemoved.add(id);
+//                continue;
+//            }
+//            ArrayList<Long> pointed = pointedGraph.get(id), validPointed = new ArrayList<Long>();
+//            for (Long pointedId : pointed){
+//                if (validIds.contains(pointedId)){
+//                    validPointed.add(pointedId);
+//                }
+//            }
+//
+//            pointedGraph.put(id, validPointed);
+//        }
+//        for (Long id : toBeRemoved){
+//            pointedGraph.remove(id);
+//        }
 
-            pointedGraph.put(id, validPointed);
-        }
-        for (Long id : toBeRemoved){
-            pointedGraph.remove(id);
-        }
-        */
     }
 
     public void setValidIds(Set<Long> validIds){

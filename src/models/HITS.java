@@ -27,13 +27,15 @@ public class HITS extends RandomWalk {
 
     @Override
     public void run() {
+        HashMap<Long, Float> currentAuthorityScores = new HashMap<Long, Float>(), currentHubsScores = new HashMap<Long, Float>();
         for (int i = 0; i < nIteration; i++){
-            HashMap<Long, Float> currentAuthorityScores = new HashMap<Long, Float>(), currentHubsScores = new HashMap<Long, Float>();
-
             for (Long id : validIds){
                 ArrayList<Long> reversedId = graph.getReversedPoints(id);
-                if (reversedId == null)
+                if (reversedId == null) {
+                    currentAuthorityScores.put(id, 0.0f);
+                    currentHubsScores.put(id, 0.0f);
                     continue;
+                }
                 //System.out.println("Valid id: " + id);
                 float authority = 0.0f, hub = 0.0f;
                 for (Long rId : reversedId){
@@ -47,9 +49,27 @@ public class HITS extends RandomWalk {
                 currentAuthorityScores.put(id, authority);
                 currentHubsScores.put(id, hub);
             }
-            scores = normalized(currentAuthorityScores);
-            hubScores = normalized(currentHubsScores);
+            float totalAuth = 0.0f, totalHub = 0.0f;
+            for (float val : currentAuthorityScores.values()){
+                totalAuth += val;
+            }
+            for (float val : currentHubsScores.values()){
+                totalHub += val;
+            }
+            if (totalAuth <= 0)
+                totalAuth = 1;
+            if (totalHub <= 0)
+                totalHub = 1;
+
+            for (Long id : validIds) {
+                scores.put(id, currentAuthorityScores.get(id)/totalAuth);
+                hubScores.put(id, currentHubsScores.get(id)/totalHub);
+            }
         }
+//        float total  = 0.0f;
+//        for (float val : scores.values())
+//            total += val;
+//        System.out.println("Total: " + total);
     }
 
     private HashMap<Long, Float> normalized(HashMap<Long, Float> s){

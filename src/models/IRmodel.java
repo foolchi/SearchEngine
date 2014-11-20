@@ -38,13 +38,13 @@ public abstract class IRmodel {
         for (long id : ids) {
             docResults.add(new DocScore(id, docScores.get(id)));
         }
-        if (randomWalk  != null){
-
-            //System.out.println("RandomWalk");
-            randomWalk.setDocScores(docResults);
-            randomWalk.run();
-            return randomWalk.getRanking();
-        }
+//        if (randomWalk  != null){
+//
+//            //System.out.println("RandomWalk");
+//            randomWalk.setDocScores(docResults);
+//            randomWalk.run();
+//            return randomWalk.getRanking();
+//        }
         return docResults;
     }
     protected RandomWalk randomWalk;
