@@ -44,6 +44,8 @@ public class PageRank extends RandomWalk {
     @Override
     public void run() {
         HashMap<Long, Float> nScores = new HashMap<Long, Float>();
+//        ArrayList<Long> aIds = new ArrayList<Long>();
+//        aIds.addAll(validIds);
         for (int i = 0; i < nIteration; i++){
 
             for (Long id : validIds){
@@ -65,8 +67,18 @@ public class PageRank extends RandomWalk {
             for (Long id : validIds){
                 scores.put(id, nScores.get(id));
             }
-        }
 
+
+//            System.out.println("Iteration: " + i);
+//            for (Long id : aIds){
+//                System.out.print(scores.get(id) + "  ");
+//            }
+//            System.out.println();
+
+        }
+        for (Long id : validIds){
+            scores.put(id, scores.get(id) * graphSize);
+        }
 //        float totalScore = 0;
 //        for (Long id : validIds){
 //            totalScore += scores.get(id);

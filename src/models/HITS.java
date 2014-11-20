@@ -16,7 +16,7 @@ public class HITS extends RandomWalk {
         scores = new HashMap<Long, Float>();
         hubScores = new HashMap<Long, Float>();
         validIds = graph.getValidIds();
-//        graphSize = graph.getGraphSize();
+        graphSize = graph.getGraphSize();
         float defaultScore = 1.0f;
         for (Long id : validIds){
             scores.put(id, defaultScore);
@@ -70,6 +70,9 @@ public class HITS extends RandomWalk {
 //        for (float val : scores.values())
 //            total += val;
 //        System.out.println("Total: " + total);
+//        for (Long id : validIds){
+//            scores.put(id, scores.get(id) * graphSize);
+//        }
     }
 
     private HashMap<Long, Float> normalized(HashMap<Long, Float> s){
@@ -85,7 +88,7 @@ public class HITS extends RandomWalk {
         return norm;
     }
 
-//    private int graphSize;
+    private int graphSize;
     private HashMap<Long, Float> hubScores;
     private Set<Long> validIds;
 }

@@ -19,19 +19,16 @@ public class testClass {
         //readSerilizeTest();
         //vectorModelTest();
         //queryParserTest();
-        //vectorTest(s1);
-        //languageModelTest(s2);
-        //okapiTest(s1);
-        pageRankTest(s2);
-//        HITStest(s1);
+
+
+//        vectorTest(s1);
+        languageModelTest(s2);
+//        okapiTest(s2);
+//        pageRankTest(s1);
+//        HITStest(s2);
     }
 
-    private static void test(){
-        HashMap<String, Integer> hTest = new HashMap<String, Integer>();
-        hTest.put("test", 1);
-        int haha = hTest.get("haha");
-        System.out.println(haha);
-    }
+
 
     private static void HITStest(String data) throws IOException {
         String queryFile = "Data/" + data + "/" + data + ".qry", resultFile = "Data/" + data + "/" + data + ".rel";
@@ -87,20 +84,15 @@ public class testClass {
         else if (data.equals("cisi"))
             parser = new CisiQueryParser(queryFileAccess, resultFileAccess);
 
-//        Weighter weighterTFIDF = new WeighterBM25(index);
-//        IRmodel iRmodel = new Okapi(weighterTFIDF);
-//        PageRank randomWalk = new PageRank();
-//        //RandomWalk randomWalk = new HITS();
-//        randomWalk.setNIteration(10);
-//        randomWalk.setIndex(index);
-//        randomWalk.setNPointed(10);
-//        randomWalk.setNSeed(30);
-//        iRmodel.setRandomWalk(randomWalk);
+        WeighterBM25 weighter = new WeighterBM25(index);
+        weighter.setK1(1.9f);
+        weighter.setB(0.8f);
+        IRmodel iRmodel = new Okapi(weighter);
 
-        WeighterTFIDF weighterTFIDF = new WeighterTFIDF(index);
-        weighterTFIDF.setMODEL(3);
-        Vector iRmodel = new Vector(weighterTFIDF);
-        iRmodel.setNormalized(true);
+//        WeighterTFIDF weighterTFIDF = new WeighterTFIDF(index);
+//        weighterTFIDF.setMODEL(3);
+//        Vector iRmodel = new Vector(weighterTFIDF);
+//        iRmodel.setNormalized(true);
 
         EvalIRModel evalIRModel = new EvalIRModel();
         evalIRModel.setRandomWalk(0);
@@ -119,10 +111,13 @@ public class testClass {
         String queryFile = "Data/" + data + "/" + data + ".qry", resultFile = "Data/" + data + "/" + data + ".rel";
         Index index = getIndex(data);
 
-        float[] k1s = {1.5f, 1.6f, 1.7f, 1.8f, 1.9f};
-        float[] bs = {0.75f, 0.8f, 0.85f};
+        float[] k1s = {1.8f, 1.85f, 1.9f, 1.95f};
+        float[] bs = {0.72f, 0.74f, 0.8f, 0.82f, 0.84f, 0.86f, 0.88f, 0.9f};
 
-        for (float b : bs) {
+        for (float b : bs)
+        for (float k1 : k1s)
+        {
+            System.out.println("====================k1:" + k1 + "====================");
             System.out.println("====================b:" + b + "====================");
             RandomAccessFile queryFileAccess = new RandomAccessFile(queryFile, "r");
             RandomAccessFile resultFileAccess = new RandomAccessFile(resultFile, "r");
@@ -133,7 +128,7 @@ public class testClass {
                 parser = new CisiQueryParser(queryFileAccess, resultFileAccess);
 
             WeighterBM25 weighter = new WeighterBM25(index);
-            weighter.setK1(1.9f);
+            weighter.setK1(k1);
             weighter.setB(b);
             IRmodel iRmodel = new Okapi(weighter);
             EvalIRModel evalIRModel = new EvalIRModel();
@@ -350,5 +345,13 @@ public class testClass {
         for (int j = 1; j < 10; j++) {
             System.out.println(i.getTfsForDoc(j));
         }
+    }
+
+
+    private static void test(){
+        HashMap<String, Integer> hTest = new HashMap<String, Integer>();
+        hTest.put("test", 1);
+        int haha = hTest.get("haha");
+        System.out.println(haha);
     }
 }

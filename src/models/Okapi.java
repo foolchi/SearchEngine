@@ -24,6 +24,13 @@ public class Okapi extends IRmodel {
                 }
             }
         }
+
+//        System.out.println();
+//        for (float val : docScores.values()){
+//            System.out.print(val + "  ");
+//        }
+//        System.out.println();
+
         return docScores;
     }
 }

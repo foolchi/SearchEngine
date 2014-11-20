@@ -21,7 +21,7 @@ public abstract class RandomWalk {
         for (DocScore docScore : initDocScores){
             long currentId = docScore.doc;
             if (docScores.containsKey(currentId)){
-                docScores.put(currentId, docScores.get(currentId) * docScore.score);
+                docScores.put(currentId, docScores.get(currentId) + docScore.score);
             }
         }
 

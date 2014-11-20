@@ -80,13 +80,14 @@ public class EvalIRModel {
 
 //        while (q != null){
 //            ArrayList<DocScore> docScores = iRmodel.getRanking(q.toQueryHash());
-//                            HITS pageRank = new HITS();
+//                            PageRank pageRank = new PageRank();
 //                        pageRank.setNSeed(nSeed);
 //                        pageRank.setNPointed(nPointed);
 //                        pageRank.setIndex(index);
 //                        pageRank.setNIteration(nIteration);
 //            pageRank.setDocScores(docScores);
 //            pageRank.run();
+//            System.out.println("Done!");
 //            docScores = pageRank.getRanking();
 //
 //            ArrayList<Integer> docs = new ArrayList<Integer>();
@@ -148,7 +149,7 @@ public class EvalIRModel {
                 e.printStackTrace();
             }
         }
-//        saveResults();
+        saveResults();
     }
 
 
